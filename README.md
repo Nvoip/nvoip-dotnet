@@ -8,6 +8,12 @@ SDK e exemplos oficiais da [Nvoip](https://www.nvoip.com.br/) para integrar a AP
 
 - .NET 8 SDK
 
+## Instalacao
+
+```bash
+dotnet add package Nvoip --version 0.1.0
+```
+
 ## Configuração
 
 ```bash

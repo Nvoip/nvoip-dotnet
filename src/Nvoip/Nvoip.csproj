@@ -3,5 +3,20 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>Nvoip</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Nvoip</Authors>
+    <Company>Nvoip</Company>
+    <Description>SDK .NET oficial para integrar OAuth, chamadas, OTP, WhatsApp, SMS e saldo com a API v2 da Nvoip.</Description>
+    <PackageTags>nvoip;voip;telefonia;sms;whatsapp;otp;api</PackageTags>
+    <PackageProjectUrl>https://www.nvoip.com.br/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Nvoip/nvoip-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>
