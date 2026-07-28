@@ -48,21 +48,42 @@ switch (args[0])
         Console.WriteLine(await client.ListWhatsAppTemplatesAsync(await AccessTokenOrCreateAsync(client)));
         break;
     case "wa-send":
+        var recipientType = Environment.GetEnvironmentVariable("NVOIP_WA_RECIPIENT_TYPE")?.Trim().ToLowerInvariant();
+        var recipientValue = Environment.GetEnvironmentVariable("NVOIP_WA_RECIPIENT_VALUE")?.Trim();
+        var toFlow = ParseBool(Environment.GetEnvironmentVariable("NVOIP_WA_TO_FLOW"), false);
+        var whatsappPayload = new Dictionary<string, object?>
+        {
+            ["idTemplate"] = Env("NVOIP_WA_TEMPLATE_ID"),
+            ["instance"] = Env("NVOIP_WA_INSTANCE"),
+            ["language"] = FirstNonEmpty(Environment.GetEnvironmentVariable("NVOIP_WA_LANGUAGE"), "pt_BR"),
+            ["bodyVariables"] = ParseArray(Environment.GetEnvironmentVariable("NVOIP_WA_BODY_VARIABLES")),
+            ["headerVariables"] = ParseArray(Environment.GetEnvironmentVariable("NVOIP_WA_HEADER_VARIABLES")),
+            ["functions"] = new Dictionary<string, object?> { ["to_flow"] = toFlow },
+        };
+        if (string.IsNullOrWhiteSpace(recipientType))
+        {
+            var destination = Env("NVOIP_WA_DESTINATION");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(destination, @"^\+?[0-9]{8,20}$"))
+                throw new InvalidOperationException("NVOIP_WA_DESTINATION must be a phone number; use recipient for BSUID");
+            whatsappPayload["destination"] = destination;
+        }
+        else
+        {
+            if (recipientType is not ("phone" or "bsuid" or "parent_bsuid") || string.IsNullOrWhiteSpace(recipientValue))
+                throw new InvalidOperationException("NVOIP_WA_RECIPIENT_TYPE must be phone, bsuid or parent_bsuid and requires NVOIP_WA_RECIPIENT_VALUE");
+            if (recipientValue.StartsWith('@'))
+                throw new InvalidOperationException("@username is not a WhatsApp recipient; use a BSUID or parent BSUID");
+            if (toFlow && recipientType is ("bsuid" or "parent_bsuid"))
+                throw new InvalidOperationException("WhatsApp Flow and attendance require a phone recipient");
+            whatsappPayload["recipient"] = new Dictionary<string, string>
+            {
+                ["type"] = recipientType,
+                ["value"] = recipientValue,
+            };
+        }
         Console.WriteLine(await client.SendWhatsAppTemplateAsync(
             await AccessTokenOrCreateAsync(client),
-            new
-            {
-                idTemplate = Env("NVOIP_WA_TEMPLATE_ID"),
-                destination = Env("NVOIP_WA_DESTINATION"),
-                instance = Env("NVOIP_WA_INSTANCE"),
-                language = FirstNonEmpty(Environment.GetEnvironmentVariable("NVOIP_WA_LANGUAGE"), "pt_BR"),
-                bodyVariables = ParseArray(Environment.GetEnvironmentVariable("NVOIP_WA_BODY_VARIABLES")),
-                headerVariables = ParseArray(Environment.GetEnvironmentVariable("NVOIP_WA_HEADER_VARIABLES")),
-                functions = new
-                {
-                    to_flow = ParseBool(Environment.GetEnvironmentVariable("NVOIP_WA_TO_FLOW"), false)
-                }
-            }));
+            whatsappPayload));
         break;
     default:
         throw new InvalidOperationException("Unknown command: " + args[0]);
