@@ -17,7 +17,7 @@ permissions:
 jobs:
   nuget:
     name: Publish to NuGet
-    runs-on: [self-hosted, Linux, X64, nvoip-ci-public-release]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
