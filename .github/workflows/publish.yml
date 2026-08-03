@@ -4,6 +4,12 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to NuGet after validation
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -11,7 +17,7 @@ permissions:
 jobs:
   nuget:
     name: Publish to NuGet
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, nvoip-ci-public-release]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -19,6 +25,7 @@ jobs:
           dotnet-version: "8.0.x"
       - run: dotnet restore src/Nvoip/Nvoip.csproj
       - run: dotnet pack src/Nvoip/Nvoip.csproj --configuration Release --output artifacts
-      - run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - if: github.event_name == 'release' || inputs.publish
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
