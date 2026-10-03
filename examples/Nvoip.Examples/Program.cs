@@ -14,7 +14,7 @@ var client = new NvoipClient(
 switch (args[0])
 {
     case "auth-token":
-        Console.WriteLine(await client.CreateAccessTokenAsync(Env("NVOIP_NUMBERSIP"), Env("NVOIP_USER_TOKEN")));
+        Console.WriteLine(await client.CreateAccessTokenAsync());
         break;
     case "balance":
         Console.WriteLine(await client.GetBalanceAsync(await AccessTokenOrCreateAsync(client)));
@@ -130,7 +130,7 @@ static async Task<string> AccessTokenOrCreateAsync(NvoipClient client)
         return accessToken;
     }
 
-    var response = await client.CreateAccessTokenAsync(Env("NVOIP_NUMBERSIP"), Env("NVOIP_USER_TOKEN"));
+    var response = await client.CreateAccessTokenAsync();
     using var document = JsonDocument.Parse(response);
     return document.RootElement.GetProperty("access_token").GetString()
         ?? throw new InvalidOperationException("access_token not found in OAuth response");

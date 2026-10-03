@@ -17,7 +17,7 @@ public sealed class NvoipClient
         string? oauthClientSecret = null,
         HttpClient? httpClient = null)
     {
-        _baseUrl = (baseUrl ?? "https://api.nvoip.com.br/v2").TrimEnd('/');
+        _baseUrl = (baseUrl ?? "https://api.nvoip.com.br/v3").TrimEnd('/');
         _oauthClientId = oauthClientId;
         _oauthClientSecret = oauthClientSecret;
         _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
@@ -28,16 +28,14 @@ public sealed class NvoipClient
         return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
     }
 
-    public Task<string> CreateAccessTokenAsync(string numbersip, string userToken, CancellationToken cancellationToken = default)
+    public Task<string> CreateAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         var payload = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["username"] = numbersip,
-            ["password"] = userToken,
-            ["grant_type"] = "password",
+            ["grant_type"] = "client_credentials",
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/oauth/token");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.nvoip.com.br/auth/oauth2/token");
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
         return SendAsync(request, cancellationToken);
@@ -51,7 +49,7 @@ public sealed class NvoipClient
             ["refresh_token"] = refreshToken,
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/oauth/token");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.nvoip.com.br/auth/oauth2/token");
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
         return SendAsync(request, cancellationToken);
