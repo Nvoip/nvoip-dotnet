@@ -25,7 +25,7 @@ public sealed class NvoipClient
 
     public static string EncodeBasicAuth(string clientId, string clientSecret)
     {
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Uri.EscapeDataString(clientId)}:{Uri.EscapeDataString(clientSecret)}"));
     }
 
     public Task<string> CreateAccessTokenAsync(CancellationToken cancellationToken = default)
@@ -94,9 +94,10 @@ public sealed class NvoipClient
         return PostJsonAsync($"{_baseUrl}/otp", accessToken, payload, cancellationToken);
     }
 
-    public Task<string> CheckOtpAsync(string code, string key, CancellationToken cancellationToken = default)
+    public Task<string> CheckOtpAsync(string accessToken, string code, string key, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/check/otp?code={Uri.EscapeDataString(code)}&key={Uri.EscapeDataString(key)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         return SendAsync(request, cancellationToken);
     }
 

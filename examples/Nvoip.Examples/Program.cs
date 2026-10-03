@@ -42,7 +42,7 @@ switch (args[0])
             }));
         break;
     case "check-otp":
-        Console.WriteLine(await client.CheckOtpAsync(Env("NVOIP_OTP_CODE"), Env("NVOIP_OTP_KEY")));
+        Console.WriteLine(await client.CheckOtpAsync(await AccessTokenOrCreateAsync(client), Env("NVOIP_OTP_CODE"), Env("NVOIP_OTP_KEY")));
         break;
     case "wa-list":
         Console.WriteLine(await client.ListWhatsAppTemplatesAsync(await AccessTokenOrCreateAsync(client)));
