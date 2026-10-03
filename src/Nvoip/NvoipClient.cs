@@ -10,34 +10,35 @@ public sealed class NvoipClient
     private readonly string _baseUrl;
     private readonly string? _oauthClientId;
     private readonly string? _oauthClientSecret;
+    private readonly string _tokenUrl;
 
     public NvoipClient(
         string? baseUrl = null,
         string? oauthClientId = null,
         string? oauthClientSecret = null,
-        HttpClient? httpClient = null)
+        HttpClient? httpClient = null,
+        string? tokenUrl = null)
     {
-        _baseUrl = (baseUrl ?? "https://api.nvoip.com.br/v2").TrimEnd('/');
+        _baseUrl = (baseUrl ?? "https://api.nvoip.com.br/v3").TrimEnd('/');
         _oauthClientId = oauthClientId;
         _oauthClientSecret = oauthClientSecret;
+        _tokenUrl = tokenUrl ?? "https://api.nvoip.com.br/auth/oauth2/token";
         _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     }
 
     public static string EncodeBasicAuth(string clientId, string clientSecret)
     {
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Uri.EscapeDataString(clientId)}:{Uri.EscapeDataString(clientSecret)}"));
     }
 
-    public Task<string> CreateAccessTokenAsync(string numbersip, string userToken, CancellationToken cancellationToken = default)
+    public Task<string> CreateAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         var payload = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["username"] = numbersip,
-            ["password"] = userToken,
-            ["grant_type"] = "password",
+            ["grant_type"] = "client_credentials",
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/oauth/token");
+        using var request = new HttpRequestMessage(HttpMethod.Post, _tokenUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
         return SendAsync(request, cancellationToken);
@@ -51,7 +52,7 @@ public sealed class NvoipClient
             ["refresh_token"] = refreshToken,
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/oauth/token");
+        using var request = new HttpRequestMessage(HttpMethod.Post, _tokenUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
         return SendAsync(request, cancellationToken);
@@ -96,9 +97,10 @@ public sealed class NvoipClient
         return PostJsonAsync($"{_baseUrl}/otp", accessToken, payload, cancellationToken);
     }
 
-    public Task<string> CheckOtpAsync(string code, string key, CancellationToken cancellationToken = default)
+    public Task<string> CheckOtpAsync(string accessToken, string code, string key, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/check/otp?code={Uri.EscapeDataString(code)}&key={Uri.EscapeDataString(key)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         return SendAsync(request, cancellationToken);
     }
 

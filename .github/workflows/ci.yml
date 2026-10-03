@@ -17,3 +17,4 @@ jobs:
           dotnet-version: "8.0.x"
       - run: dotnet build src/Nvoip/Nvoip.csproj --configuration Release
       - run: dotnet build examples/Nvoip.Examples/Nvoip.Examples.csproj --configuration Release
+      - run: dotnet test tests/Nvoip.Tests/Nvoip.Tests.csproj --configuration Release
