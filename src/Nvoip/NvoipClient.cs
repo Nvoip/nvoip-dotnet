@@ -10,16 +10,19 @@ public sealed class NvoipClient
     private readonly string _baseUrl;
     private readonly string? _oauthClientId;
     private readonly string? _oauthClientSecret;
+    private readonly string _tokenUrl;
 
     public NvoipClient(
         string? baseUrl = null,
         string? oauthClientId = null,
         string? oauthClientSecret = null,
-        HttpClient? httpClient = null)
+        HttpClient? httpClient = null,
+        string? tokenUrl = null)
     {
         _baseUrl = (baseUrl ?? "https://api.nvoip.com.br/v3").TrimEnd('/');
         _oauthClientId = oauthClientId;
         _oauthClientSecret = oauthClientSecret;
+        _tokenUrl = tokenUrl ?? "https://api.nvoip.com.br/auth/oauth2/token";
         _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     }
 
@@ -35,7 +38,7 @@ public sealed class NvoipClient
             ["grant_type"] = "client_credentials",
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.nvoip.com.br/auth/oauth2/token");
+        using var request = new HttpRequestMessage(HttpMethod.Post, _tokenUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
         return SendAsync(request, cancellationToken);
@@ -49,7 +52,7 @@ public sealed class NvoipClient
             ["refresh_token"] = refreshToken,
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.nvoip.com.br/auth/oauth2/token");
+        using var request = new HttpRequestMessage(HttpMethod.Post, _tokenUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
         return SendAsync(request, cancellationToken);
