@@ -31,7 +31,7 @@ public sealed class NvoipClient
         return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Uri.EscapeDataString(clientId)}:{Uri.EscapeDataString(clientSecret)}"));
     }
 
-    public Task<string> CreateAccessTokenAsync(CancellationToken cancellationToken = default)
+    public async Task<string> CreateAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         var payload = new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -41,10 +41,10 @@ public sealed class NvoipClient
         using var request = new HttpRequestMessage(HttpMethod.Post, _tokenUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
-        return SendAsync(request, cancellationToken);
+        return await SendAsync(request, cancellationToken);
     }
 
-    public Task<string> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    public async Task<string> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         var payload = new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -55,14 +55,14 @@ public sealed class NvoipClient
         using var request = new HttpRequestMessage(HttpMethod.Post, _tokenUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", ResolveBasicAuth());
         request.Content = payload;
-        return SendAsync(request, cancellationToken);
+        return await SendAsync(request, cancellationToken);
     }
 
-    public Task<string> GetBalanceAsync(string accessToken, CancellationToken cancellationToken = default)
+    public async Task<string> GetBalanceAsync(string accessToken, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/balance");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        return SendAsync(request, cancellationToken);
+        return await SendAsync(request, cancellationToken);
     }
 
     public Task<string> SendSmsAsync(string accessToken, string numberPhone, string message, CancellationToken cancellationToken = default)
@@ -97,11 +97,11 @@ public sealed class NvoipClient
         return PostJsonAsync($"{_baseUrl}/otp", accessToken, payload, cancellationToken);
     }
 
-    public Task<string> CheckOtpAsync(string accessToken, string code, string key, CancellationToken cancellationToken = default)
+    public async Task<string> CheckOtpAsync(string accessToken, string code, string key, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/check/otp?code={Uri.EscapeDataString(code)}&key={Uri.EscapeDataString(key)}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        return SendAsync(request, cancellationToken);
+        return await SendAsync(request, cancellationToken);
     }
 
     public Task<string> ListWhatsAppTemplatesAsync(string accessToken, CancellationToken cancellationToken = default)
@@ -126,12 +126,12 @@ public sealed class NvoipClient
         throw new InvalidOperationException("Missing OAuth client credentials. Configure oauthClientId + oauthClientSecret.");
     }
 
-    private Task<string> PostJsonAsync(string url, string accessToken, object payload, CancellationToken cancellationToken)
+    private async Task<string> PostJsonAsync(string url, string accessToken, object payload, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        return SendAsync(request, cancellationToken);
+        return await SendAsync(request, cancellationToken);
     }
 
     private async Task<string> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
